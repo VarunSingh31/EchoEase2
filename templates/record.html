@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stammering Detection</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #333;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        #result {
+            margin-top: 20px;
+            font-size: 1.2rem;
+        }
+        button {
+            padding: 10px 20px;
+            margin-top: 20px;
+            font-size: 18px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #charts-container {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        canvas {
+            margin-top: 20px;
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1>Stammering Detection</h1>
+
+    <!-- Record Button -->
+    <button id="start-recording" onclick="startRecording()">Start Recording</button>
+    <button id="stop-recording" onclick="stopRecording()" style="display:none;">Stop Recording</button>
+
+    <!-- Video and Audio Elements -->
+    <video id="webcam" width="300" height="200" autoplay muted></video>
+    <audio id="audio-playback" controls style="display:none;"></audio>
+
+    <div id="result"></div>
+
+    <div id="charts-container" style="display:none;">
+        <canvas id="stammeringChart" width="400" height="400"></canvas>
+        <canvas id="pauseChart" width="400" height="400"></canvas>
+    </div>
+
+    <script>
+        let recorder, audioChunks, mediaRecorder;
+
+        async function startRecording() {
+            document.getElementById('start-recording').style.display = 'none';
+            document.getElementById('stop-recording').style.display = 'block';
+
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            const webcam = document.getElementById('webcam');
+            webcam.srcObject = stream;
+
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+            mediaRecorder.ondataavailable = event => {
+                audioChunks.push(event.data);
+            };
+            mediaRecorder.onstop = async () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                const formData = new FormData();
+                formData.append('audio', audioBlob, 'audio.wav');
+
+                // Send the audio to the backend for processing
+                const response = await fetch('/process_audio', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                displayResults(result);
+            };
+            mediaRecorder.start();
+        }
+
+        function stopRecording() {
+            mediaRecorder.stop();
+            document.getElementById('webcam').srcObject.getTracks().forEach(track => track.stop());
+        }
+
+        function displayResults(result) {
+            // Display recognized text
+            document.getElementById('result').innerHTML = `
+                <strong>Recognized Text:</strong> ${result.text}<br>
+                <strong>Stammering Score:</strong> ${result.score}<br>
+                <strong>Stammering Words Detected:</strong> ${result.stammering_count}<br>
+                <strong>Pauses Detected:</strong> ${result.pauses}
+            `;
+
+            // Show charts
+            document.getElementById('charts-container').style.display = 'block';
+
+            // Stammering Chart
+            const stammeringCtx = document.getElementById('stammeringChart').getContext('2d');
+            new Chart(stammeringCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Stammering Words Detected'],
+                    datasets: [{
+                        label: 'Number of Stammering Words',
+                        data: [result.stammering_count],
+                        backgroundColor: ['rgba(255, 99, 132, 0.2)'],
+                        borderColor: ['rgba(255, 99, 132, 1)'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Pause Chart
+            const pauseCtx = document.getElementById('pauseChart').getContext('2d');
+            new Chart(pauseCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['No Pause', 'Pause Detected'],
+                    datasets: [{
+                        data: [100 - result.pauses, result.pauses],
+                        backgroundColor: ['rgba(75, 192, 192, 0.2)', 'rgba(255, 159, 64, 0.2)'],
+                        borderColor: ['rgba(75, 192, 192, 1)', 'rgba(255, 159, 64, 1)'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
+
+
+
+
+

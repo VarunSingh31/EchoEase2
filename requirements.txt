@@ -1,0 +1,5 @@
+Flask
+librosa
+tensorflow
+scipy
+speechrecognition
