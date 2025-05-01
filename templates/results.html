@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stammering Detection Results - EchoEase</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        html {
+            scroll-behavior: smooth;
+        }
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #8e5af7, #5a4f96);
+            color: #222;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            flex-direction: column;
+            padding: 20px;
+        }
+        .results-container {
+            background: #f6f1fc;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 700px;
+            width: 100%;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            position: relative;
+        }
+        .results-container::before {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            right: -5px;
+            bottom: -5px;
+            background: radial-gradient(circle, rgba(142, 90, 247, 0.1) 0%, transparent 70%);
+            border-radius: 15px;
+            z-index: -1;
+        }
+        h1 {
+            font-size: 2.5rem;
+            color: #4b0082;
+            margin-bottom: 20px;
+            animation: fadeInUp 1s ease-out;
+        }
+        .score, .details, .charts {
+            margin-top: 20px;
+            font-size: 1.2rem;
+            color: #333;
+        }
+        .score p, .details p {
+            margin: 10px 0;
+        }
+        .score strong, .details strong {
+            color: #4b0082;
+        }
+        pre {
+            background: #e9dcfa;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: left;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .charts {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        canvas {
+            max-width: 100%;
+            margin-top: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 18px;
+            margin-top: 30px;
+            cursor: pointer;
+            background: #5a4f96;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: background 0.3s ease;
+        }
+        button:hover {
+            background: #8e5af7;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @media (max-width: 768px) {
+            .results-container {
+                padding: 20px;
+            }
+            h1 {
+                font-size: 2rem;
+            }
+            .score, .details {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="results-container">
+        <h1>Stammering Detection Results</h1>
+        <div class="score">
+            <p><strong>Stammering Score:</strong> <span id="score"></span></p>
+            <p><strong>Stammering Words Detected:</strong> <span id="stammering_count"></span></p>
+            <p><strong>Pauses Detected:</strong> <span id="pauses"></span></p>
+        </div>
+        <div class="details">
+            <p><strong>Text Recognized:</strong></p>
+            <pre id="text"></pre>
+        </div>
+        <div class="charts">
+            <canvas id="stammeringChart" width="400" height="400"></canvas>
+            <canvas id="pauseChart" width="400" height="400"></canvas>
+        </div>
+        <button onclick="window.location.href='/'">Go Back</button>
+    </div>
+    <script>
+        // Parse query parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const result = {
+            text: decodeURIComponent(urlParams.get('text') || ''),
+            score: urlParams.get('score') || 'N/A',
+            stammering_count: parseInt(urlParams.get('stammering_count')) || 0,
+            pauses: parseInt(urlParams.get('pauses')) || 0
+        };
+
+        // Display results
+        document.getElementById('score').textContent = result.score;
+        document.getElementById('stammering_count').textContent = result.stammering_count;
+        document.getElementById('pauses').textContent = result.pauses;
+        document.getElementById('text').textContent = result.text;
+
+        // Render charts
+        const stammeringCtx = document.getElementById('stammeringChart').getContext('2d');
+        new Chart(stammeringCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Stammering Words Detected'],
+                datasets: [{
+                    label: 'Number of Stammering Words',
+                    data: [result.stammering_count],
+                    backgroundColor: ['rgba(255, 99, 132, 0.2)'],
+                    borderColor: ['rgba(255, 99, 132, 1)'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        const pauseCtx = document.getElementById('pauseChart').getContext('2d');
+        new Chart(pauseCtx, {
+            type: 'pie',
+            data: {
+                labels: ['No Pause', 'Pause Detected'],
+                datasets: [{
+                    data: [100 - result.pauses, result.pauses],
+                    backgroundColor: ['rgba(75, 192, 192, 0.2)', 'rgba(255, 159, 64, 0.2)'],
+                    borderColor: ['rgba(75, 192, 192, 1)', 'rgba(255, 159, 64, 1)'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,172 +1,558 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stammering Detection</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #333;
-            color: white;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            flex-direction: column;
-        }
-        h1 {
-            margin-bottom: 20px;
-        }
-        #result {
-            margin-top: 20px;
-            font-size: 1.2rem;
-        }
-        button {
-            padding: 10px 20px;
-            margin-top: 20px;
-            font-size: 18px;
-            cursor: pointer;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        #charts-container {
-            margin-top: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        canvas {
-            margin-top: 20px;
-            max-width: 100%;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EchoEase - Stammering Detection</title>
+  <style>
+    html {
+      scroll-behavior: smooth;
+    }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f6f1fc;
+      color: #222;
+    }
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 50px;
+      background: linear-gradient(135deg, #8e5af7, #5a4f96);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      transition: background-color 0.3s ease;
+    }
+    nav.scrolled {
+      background: linear-gradient(135deg, #5a4f96, #8e5af7);
+    }
+    .logo {
+      font-size: 28px;
+      font-weight: bold;
+      color: #ffffff;
+      text-transform: uppercase;
+      padding: 8px 20px;
+      border-radius: 30px;
+      background: linear-gradient(135deg, #6b3ec9, #4b0082);
+      box-shadow: 0 0 15px rgba(142, 90, 247, 0.3);
+      transition: transform 0.3s ease;
+    }
+    .logo:hover {
+      transform: scale(1.05);
+    }
+    nav a {
+      margin-left: 30px;
+      text-decoration: none;
+      color: white;
+      font-weight: 500;
+      transition: color 0.3s ease;
+    }
+    nav a:hover {
+      color: #f6f1fc;
+    }
+    .btn {
+      padding: 10px 20px;
+      background: #5a4f96;
+      color: white;
+      border-radius: 25px;
+      text-decoration: none;
+      font-weight: bold;
+      transition: background 0.3s ease;
+    }
+    .btn:hover {
+      background: #8e5af7;
+    }
+    .hamburger {
+      display: none;
+      font-size: 30px;
+      cursor: pointer;
+      color: white;
+    }
+    .menu {
+      display: flex;
+    }
+    .menu a {
+      margin-left: 20px;
+    }
+    .menu.active {
+      display: block;
+    }
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      padding: 60px 50px;
+      background: #e9dcfa;
+    }
+    .hero-text {
+      max-width: 500px;
+    }
+    .hero-text h1 {
+      font-size: 36px;
+      margin-bottom: 15px;
+      color: #4b0082;
+      display: inline-block;
+      overflow: hidden;
+      white-space: nowrap;
+      border-right: 4px solid #8e5af7;
+      animation: typing 4s steps(30, end) infinite 8s, blink 0.75s step-end infinite, glow 2s ease-in-out infinite alternate;
+    }
+    @keyframes typing {
+      0% { width: 0; }
+      50% { width: 100%; }
+      100% { width: 0; }
+    }
+    @keyframes blink {
+      from, to { border-color: transparent; }
+      50% { border-color: #8e5af7; }
+    }
+    @keyframes glow {
+      from { text-shadow: 0 0 5px rgba(142, 90, 247, 0.5); }
+      to { text-shadow: 0 0 20px rgba(142, 90, 247, 0.9); }
+    }
+    .hero-text p {
+      font-size: 18px;
+      margin-bottom: 20px;
+      font-weight: 600;
+      color: #333;
+      display: inline-block;
+      animation: bounce 1.5s ease infinite;
+    }
+    @keyframes bounce {
+      0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-10px); }
+      60% { transform: translateY(-5px); }
+    }
+    .hero-image video {
+      height: 300px;
+      border-radius: 20px;
+      animation: fadeIn 2s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .card-section {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      padding: 60px 50px;
+      background: white;
+    }
+    .card {
+      position: relative;
+      width: 250px;
+      padding: 20px;
+      background: #f6f1fc;
+      border-radius: 15px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      overflow: hidden;
+      transition: transform 0.3s ease;
+    }
+    .card:hover {
+      transform: translateY(-10px);
+    }
+    .card h3 {
+      font-size: 20px;
+      margin-bottom: 10px;
+      color: #4b0082;
+    }
+    .card p {
+      font-size: 16px;
+      color: #333;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(142, 90, 247, 0.5) 0%, transparent 70%);
+      opacity: 0.6;
+      animation: rotateLight 3s linear infinite;
+      pointer-events: none;
+    }
+    @keyframes rotateLight {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .info-section {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 40px;
+      padding: 60px 50px;
+      background: #f0eaff;
+    }
+    .info-pair {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      max-width: 620px;
+    }
+    .info-pair:nth-child(odd) {
+      flex-direction: row; /* Image on left for odd pairs */
+    }
+    .info-pair:nth-child(even) {
+      flex-direction: row-reverse; /* Image on right for even pairs */
+    }
+    .info-card {
+      width: 300px;
+      padding: 20px;
+      background: linear-gradient(135deg, #ffffff, #f0eaff);
+      border-radius: 15px;
+      box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1), -5px -5px 15px rgba(255, 255, 255, 0.5);
+      text-align: center;
+      transition: all 0.3s ease;
+      position: relative;
+      transform-style: preserve-3d;
+    }
+    .info-card:hover {
+      transform: translateZ(10px) rotateX(5deg) scale(1.05);
+      box-shadow: 10px 10px 20px rgba(0, 0, 0, 0.2), -10px -10px 20px rgba(255, 255, 255, 0.6);
+    }
+    .info-card h2 {
+      font-size: 28px;
+      margin-bottom: 15px;
+      color: #4b0082;
+      animation: fadeInUp 1s ease-out;
+    }
+    .info-card p {
+      font-size: 18px;
+      color: #333;
+      animation: fadeInUp 1.5s ease-out;
+    }
+    .info-card::before {
+      content: '';
+      position: absolute;
+      top: -5px;
+      left: -5px;
+      right: -5px;
+      bottom: -5px;
+      background: radial-gradient(circle, rgba(142, 90, 247, 0.1) 0%, transparent 70%);
+      border-radius: 15px;
+      z-index: -1;
+      transition: opacity 0.3s ease;
+    }
+    .info-card:hover::before {
+      opacity: 0.5;
+    }
+    .info-image {
+      flex: 1 1 300px;
+      padding: 20px;
+      text-align: center;
+    }
+    .info-image img {
+      height: 200px;
+      border-radius: 12px;
+      transition: transform 0.3s ease;
+    }
+    .info-image img:hover {
+      transform: scale(1.1);
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    footer {
+      text-align: center;
+      padding: 40px 20px;
+      background: #f6f1fc;
+      font-size: 14px;
+      border-top: 1px solid #e9dcfa;
+    }
+    .footer-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1200px;
+      margin: 0 auto;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .footer-social {
+      display: flex;
+      align-items: center;
+    }
+    .footer-social a {
+      margin: 0 10px;
+      display: inline-block;
+      transition: transform 0.3s ease;
+    }
+    .footer-social a:hover {
+      transform: scale(1.2);
+    }
+    .footer-social img {
+      width: 30px;
+      height: 30px;
+    }
+    .footer-copyright {
+      flex: 1;
+      text-align: center;
+      color: #333;
+    }
+    .footer-contact {
+      text-align: right;
+    }
+    .footer-contact p {
+      margin: 5px 0;
+      color: #333;
+    }
+    .footer-contact a {
+      color: #4b0082;
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+    .footer-contact a:hover {
+      color: #8e5af7;
+    }
+    button {
+      padding: 10px 20px;
+      margin-top: 20px;
+      font-size: 18px;
+      cursor: pointer;
+      background-color: #007bff;
+      color: white;
+      border: noneloating: 5px;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    @media (max-width: 768px) {
+      header, .info-section, .card-section {
+        flex-direction: column;
+        text-align: center;
+      }
+      .menu {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 10px;
+      }
+      .hamburger {
+        display: block;
+      }
+      nav .logo {
+        font-size: 20px;
+      }
+      .menu.active {
+        display: block;
+      }
+      nav a {
+        margin-left: 0;
+        margin-top: 10px;
+      }
+      .card, .info-card {
+        width: 100%;
+        max-width: 300px;
+      }
+      .info-pair {
+        flex-direction: column;
+        align-items: center;
+      }
+      .info-pair:nth-child(odd), .info-pair:nth-child(even) {
+        flex-direction: column;
+      }
+      .footer-content {
+        flex-direction: column;
+        text-align: center;
+      }
+      .footer-social {
+        justify-content: center;
+      }
+      .footer-contact {
+        text-align: center;
+      }
+      .footer-copyright {
+        order: 1;
+      }
+    }
+  </style>
 </head>
 <body>
-    <h1>Stammering Detection</h1>
-
-    <!-- Record Button -->
-    <button id="start-recording" onclick="startRecording()">Start Recording</button>
-    <button id="stop-recording" onclick="stopRecording()" style="display:none;">Stop Recording</button>
-
-    <!-- Video and Audio Elements -->
-    <video id="webcam" width="300" height="200" autoplay muted></video>
-    <audio id="audio-playback" controls style="display:none;"></audio>
-
-    <div id="result"></div>
-
-    <div id="charts-container" style="display:none;">
-        <canvas id="stammeringChart" width="400" height="400"></canvas>
-        <canvas id="pauseChart" width="400" height="400"></canvas>
+  <nav>
+    <div class="logo">EchoEase</div>
+    <div class="hamburger" onclick="toggleMenu()">☰</div>
+    <div class="menu">
+      <a href="#getstarted" class="btn">Get Started</a>
     </div>
+  </nav>
+  <header id="getstarted">
+    <div class="hero-text">
+      <h1>Find Your Voice with EchoEase</h1>
+      <p>A smarter way to improve fluency and confidence for people who stutter</p>
+      <button id="start-recording" onclick="startRecording()" class="btn">Start Recording</button>
+    </div>
+    <div class="hero-image">
+      <video id="webcam" width="300" height="200" autoplay muted></video>
+    </div>
+  </header>
+  <section class="card-section">
+    <div class="card">
+      <h3>What is Stuttering?</h3>
+      <p>Stuttering, also known as stammering, is a speech disorder involving involuntary repetitions, prolongations, or blocks in speech, disrupting its natural flow.</p>
+    </div>
+    <div class="card">
+      <h3>Impact on Sufferers</h3>
+      <p>People who stutter often face social rejection, discrimination, and mental health challenges like anxiety, isolation, and lower job prospects.</p>
+    </div>
+    <div class="card">
+      <h3>No Cure Exists</h3>
+      <p>There is currently no cure for stuttering. While therapy can help manage it, the condition often persists lifelong for many individuals.</p>
+    </div>
+    <div class="card">
+      <h3>2024 Data</h3>
+      <p>In 2024, adult stuttering prevalence was estimated at 0.96%, affecting around 80 million people globally, with males more impacted than females.</p>
+    </div>
+  </section>
+  <section class="info-section">
+    <div class="info-pair">
+      <div class="info-image">
+        <img src="https://cdn-icons-png.flaticon.com/512/190/190411.png" alt="Free Icon">
+      </div>
+      <div class="info-card">
+        <h2>Enjoy Free Access</h2>
+        <p>Delight in the freedom of using EchoEase at no cost, opening doors to transformative speech tools for all.</p>
+      </div>
+    </div>
+    <div class="info-pair">
+      <div class="info-card">
+        <h2>Practice Anytime, Anywhere</h2>
+        <p>Embrace the flexibility to refine your skills wherever inspiration strikes, be it home or on the move.</p>
+      </div>
+      <div class="info-image">
+        <img src="https://cdn-icons-png.flaticon.com/512/684/684908.png" alt="Anytime Anywhere Icon">
+      </div>
+    </div>
+    <div class="info-pair">
+      <div class="info-image">
+        <img src="https://cdn-icons-png.flaticon.com/512/1828/1828884.png" alt="Motivation Icon">
+      </div>
+      <div class="info-card">
+        <h2>Stay Inspired</h2>
+        <p>Celebrate your journey with progress tracking and rewarding milestones that keep your spirit soaring.</p>
+      </div>
+    </div>
+    <div class="info-pair">
+      <div class="info-card">
+        <h2>Personalized AI Support</h2>
+        <p>Receive tailored guidance from AI that adapts to your unique speech patterns and goals, enhancing your progress.</p>
+      </div>
+      <div class="info-image">
+        <img src="https://cdn-icons-png.flaticon.com/512/1055/1055645.png" alt="AI Support Icon">
+      </div>
+    </div>
+    <div class="info-pair">
+      <div class="info-image">
+        <img src="https://cdn-icons-png.flaticon.com/512/3210/3210742.png" alt="Detection Icon">
+      </div>
+      <div class="info-card">
+        <h2>Smart Detection</h2>
+        <p>AI detects your needs in real-time, offering instant feedback to improve fluency without interrupting your flow.</p>
+      </div>
+    </div>
+    <div class="info-pair">
+      <div class="info-card">
+        <h2>No Judgments</h2>
+        <p>Practice in a safe, supportive space where AI provides encouragement, free from criticism or bias.</p>
+      </div>
+      <div class="info-image">
+        <img src="https://cdn-icons-png.flaticon.com/512/2592/2592965.png" alt="Supportive Icon">
+      </div>
+    </div>
+  </section>
+  <footer>
+    <div class="footer-content">
+      <div class="footer-social">
+        <a href="https://www.instagram.com" target="_blank">
+          <img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" alt="Instagram">
+        </a>
+        <a href="https://www.twitter.com" target="_blank">
+          <img src="https://cdn-icons-png.flaticon.com/512/733/733579.png" alt="Twitter">
+        </a>
+        <a href="https://www.linkedin.com" target="_blank">
+          <img src="https://cdn-icons-png.flaticon.com/512/174/174857.png" alt="LinkedIn">
+        </a>
+      </div>
+      <div class="footer-copyright">
+        <p>©️ 2025 EchoEase. All rights reserved.</p>
+      </div>
+      <div class="footer-contact">
+        <p>Contact Us: <a href="tel:+1234567890">+1 (234) 567-890</a></p>
+        <p>Email: <a href="mailto:support@echoease.com">support@echoease.com</a></p>
+      </div>
+    </div>
+  </footer>
+  <button id="stop-recording" onclick="stopRecording()" style="display:none;">Stop Recording</button>
+  <script>
+    let recorder, audioChunks, mediaRecorder;
 
-    <script>
-        let recorder, audioChunks, mediaRecorder;
+    async function startRecording() {
+      document.querySelector('#start-recording').style.display = 'none';
+      document.querySelector('#stop-recording').style.display = 'block';
 
-        async function startRecording() {
-            document.getElementById('start-recording').style.display = 'none';
-            document.getElementById('stop-recording').style.display = 'block';
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      const webcam = document.getElementById('webcam');
+      webcam.srcObject = stream;
 
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-            const webcam = document.getElementById('webcam');
-            webcam.srcObject = stream;
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks = [];
+      mediaRecorder.ondataavailable = event => {
+        audioChunks.push(event.data);
+      };
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+        const formData = new FormData();
+        formData.append('audio', audioBlob, 'audio.wav');
 
-            mediaRecorder = new MediaRecorder(stream);
-            audioChunks = [];
-            mediaRecorder.ondataavailable = event => {
-                audioChunks.push(event.data);
-            };
-            mediaRecorder.onstop = async () => {
-                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                const formData = new FormData();
-                formData.append('audio', audioBlob, 'audio.wav');
+        const response = await fetch('/process_audio', {
+          method: 'POST',
+          body: formData
+        });
 
-                // Send the audio to the backend for processing
-                const response = await fetch('/process_audio', {
-                    method: 'POST',
-                    body: formData
-                });
+        const result = await response.json();
+        // Redirect to results page with query parameters
+        const queryParams = new URLSearchParams({
+          text: encodeURIComponent(result.text),
+          score: result.score,
+          stammering_count: result.stammering_count,
+          pauses: result.pauses
+        });
+        window.location.href = `/results.html?${queryParams.toString()}`;
+      };
+      mediaRecorder.start();
+    }
 
-                const result = await response.json();
-                displayResults(result);
-            };
-            mediaRecorder.start();
-        }
+    function stopRecording() {
+      mediaRecorder.stop();
+      document.getElementById('webcam').srcObject.getTracks().forEach(track => track.stop());
+      document.querySelector('#stop-recording').style.display = 'none';
+      document.querySelector('#start-recording').style.display = 'block';
+    }
 
-        function stopRecording() {
-            mediaRecorder.stop();
-            document.getElementById('webcam').srcObject.getTracks().forEach(track => track.stop());
-        }
+    window.addEventListener('scroll', () => {
+      const nav = document.querySelector('nav');
+      if (window.scrollY > 50) {
+        nav.classList.add('scrolled');
+      } else {
+        nav.classList.remove('scrolled');
+      }
+    });
 
-        function displayResults(result) {
-            // Display recognized text
-            document.getElementById('result').innerHTML = `
-                <strong>Recognized Text:</strong> ${result.text}<br>
-                <strong>Stammering Score:</strong> ${result.score}<br>
-                <strong>Stammering Words Detected:</strong> ${result.stammering_count}<br>
-                <strong>Pauses Detected:</strong> ${result.pauses}
-            `;
-
-            // Show charts
-            document.getElementById('charts-container').style.display = 'block';
-
-            // Stammering Chart
-            const stammeringCtx = document.getElementById('stammeringChart').getContext('2d');
-            new Chart(stammeringCtx, {
-                type: 'bar',
-                data: {
-                    labels: ['Stammering Words Detected'],
-                    datasets: [{
-                        label: 'Number of Stammering Words',
-                        data: [result.stammering_count],
-                        backgroundColor: ['rgba(255, 99, 132, 0.2)'],
-                        borderColor: ['rgba(255, 99, 132, 1)'],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
-
-            // Pause Chart
-            const pauseCtx = document.getElementById('pauseChart').getContext('2d');
-            new Chart(pauseCtx, {
-                type: 'pie',
-                data: {
-                    labels: ['No Pause', 'Pause Detected'],
-                    datasets: [{
-                        data: [100 - result.pauses, result.pauses],
-                        backgroundColor: ['rgba(75, 192, 192, 0.2)', 'rgba(255, 159, 64, 0.2)'],
-                        borderColor: ['rgba(75, 192, 192, 1)', 'rgba(255, 159, 64, 1)'],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            position: 'top'
-                        }
-                    }
-                }
-            });
-        }
-    </script>
+    function toggleMenu() {
+      const menu = document.querySelector('.menu');
+      menu.classList.toggle('active');
+    }
+  </script>
 </body>
 </html>
-
-
-
-
-
